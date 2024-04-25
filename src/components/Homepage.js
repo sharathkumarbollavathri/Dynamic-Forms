@@ -129,7 +129,7 @@ export const Homepage = () => {
                             value={optionInput}
                             onChange={handleOptionInputChange}
                         />
-
+                        
                         <button onClick={addOptions}>Add Option</button>
                         <ul>
                             {options.map((option, index) => (
@@ -173,7 +173,7 @@ export const Homepage = () => {
                                         
                                         <option key={index}>{option}</option>
                                         </>
-                                    ))}fdssf
+                                    ))}
                                 </select>
                             )}
                             {input.type==='checkbox' && <input type='checkbox'/>}
