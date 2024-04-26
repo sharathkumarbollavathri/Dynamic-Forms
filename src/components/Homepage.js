@@ -80,7 +80,7 @@ export const Homepage = () => {
 
     return (
         <div>
-            <h1>React Dynamic Form</h1>
+            <h1 className='mb-4'>React Dynamic Form</h1>
             <form>
                 {/* <label htmlFor="tagselection">Select one Tag</label> */}
                 <select name="tagselection" id="tagselection" value={selectTags} onChange={handleChange} className='border border-primary border-3 rounded mb-3'>
@@ -209,7 +209,7 @@ export const Homepage = () => {
                 <div>
                     {selectTags.length>=1 ? <button type="button" className='btn btn-primary' onClick={addInput}>Add input</button> : ' '}
                 </div>
-                
+
 {/* displaying new form */}
 
                 <ul>
