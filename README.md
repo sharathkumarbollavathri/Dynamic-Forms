@@ -33,11 +33,9 @@ Contributions to the React Dynamic Form Builder are welcome! To contribute, plea
 - Test your changes thoroughly.
 - Submit a pull request with a clear description of your changes.
 
-## License
-The React Dynamic Form Builder is licensed under the [MIT License](LICENSE).
 
 ## Contact
-For questions or feedback regarding the React Dynamic Form Builder, please contact [Your Name](mailto:your_email@example.com).
+For questions or feedback regarding the React Dynamic Form Builder, please contact ## mailto: sharath4997@gmail.com.
 
 ## Demo
 You can try out a live demo of the React Dynamic Form Builder [here](#).
