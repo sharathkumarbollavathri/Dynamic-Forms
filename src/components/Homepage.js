@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export const Homepage = () => {
     const [selectTags, setSelectTags] = useState('');
@@ -8,14 +8,28 @@ export const Homepage = () => {
     const [optionInput, setOptionInput] = useState('');
     const [showSubmitButton, setShowSubmitButton] = useState(false);
     const [inputValues, setInputValues] = useState({});
+    const [message, setMessage] = useState('');
+    const [validationMessages, setValidationMessages] = useState({});
+
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                setMessage('');
+            }, 5000);
+            return () => clearTimeout(timer); // Clear the timeout if the component unmounts
+        }
+    }, [message]);
 
     const handleChange = (e) => {
         setSelectTags(e.target.value);
         setLabel('');
+        setOptions([]);
+        setValidationMessages({});
     };
 
     const handleLabelChange = (e) => {
         setLabel(e.target.value);
+        setValidationMessages({});
     };
 
     const handleOptionInputChange = (e) => {
@@ -23,27 +37,34 @@ export const Homepage = () => {
     };
 
     const handleInputChange = (e) => {
+        const { name, type, value, checked } = e.target;
         setInputValues({
             ...inputValues,
-            [e.target.name]: e.target.value
+            [name]: type === 'checkbox' ? checked : value
         });
     };
 
     const addInput = () => {
-        if (!label || !selectTags) {
-            alert('Please enter a label name and select a form type.');
-            return;
+        let newValidationMessages = {};
+
+        if (!label) {
+            newValidationMessages.label = 'Please enter a label name.';
+        }
+        if (!selectTags) {
+            newValidationMessages.selectTags = 'Please select a form type.';
         }
         if (selectTags === 'checkbox' && options.length <= 1) {
-            alert('Please add at least two options for the checkbox.');
-            return;
+            newValidationMessages.options = 'Please add at least two options for the checkbox.';
         }
         if (selectTags === 'radio' && options.length <= 1) {
-            alert('Please add at least two options for the radio button.');
-            return;
+            newValidationMessages.options = 'Please add at least two options for the radio button.';
         }
         if (selectTags === 'dropdown' && options.length <= 1) {
-            alert('Please add at least two options for the dropdown options.');
+            newValidationMessages.options = 'Please add at least two options for the dropdown.';
+        }
+
+        if (Object.keys(newValidationMessages).length > 0) {
+            setValidationMessages(newValidationMessages);
             return;
         }
 
@@ -57,164 +78,225 @@ export const Homepage = () => {
         setLabel('');
         setOptions([]);
         setShowSubmitButton(true);
+        setValidationMessages({});
     };
 
     const addOptions = (e) => {
         e.preventDefault();
         if (!optionInput) {
-            alert('Please enter an option.');
+            setValidationMessages({ ...validationMessages, optionInput: 'Please enter an option.' });
             return;
         }
         setOptions([...options, optionInput]);
         setOptionInput('');
+        setValidationMessages({});
     };
 
     const handleCheckboxSubmit = (e) => {
         e.preventDefault();
-        const submittedData = inputs.map((input, index) => {
-            return {
-                type: input.type,
-                label: input.label,
-                id: `input_${index}`,
-                value: inputValues[`input_${index}`] || input.options.filter(option => option.selected).map(option => option.value)
-            };
-        });
-        console.log(submittedData);
+        const newValidationMessages = {};
+
+        for (const input of inputs) {
+            if (!inputValues[`input_${inputs.indexOf(input)}`] && input.type !== 'checkbox' && input.type !== 'radio') {
+                newValidationMessages[`input_${inputs.indexOf(input)}`] = `Please fill out the ${input.label} field.`;
+            }
+            if ((input.type === 'checkbox' || input.type === 'radio') && !input.options.some((_, idx) => inputValues[`input_${inputs.indexOf(input)}_${idx}`])) {
+                newValidationMessages[`input_${inputs.indexOf(input)}`] = `Please select an option for ${input.label}.`;
+            }
+        }
+
+        setValidationMessages(newValidationMessages);
+
+        if (Object.keys(newValidationMessages).length === 0) {
+            const submittedData = inputs.map((input, index) => {
+                if (input.type === 'checkbox') {
+                    return {
+                        type: input.type,
+                        label: input.label,
+                        id: `input_${index}`,
+                        value: input.options.filter((_, idx) => inputValues[`input_${index}_${idx}`])
+                    };
+                } else if (input.type === 'radio') {
+                    return {
+                        type: input.type,
+                        label: input.label,
+                        id: `input_${index}`,
+                        value: input.options.find((_, idx) => inputValues[`input_${index}_${idx}`])
+                    };
+                } else {
+                    return {
+                        type: input.type,
+                        label: input.label,
+                        id: `input_${index}`,
+                        value: inputValues[`input_${index}`]
+                    };
+                }
+            });
+
+            console.log(submittedData);
+            setMessage('Check console for form data');
+            setInputValues({});
+        }
     };
 
     return (
-        <div>
-            <h1 className='mb-4'>React Dynamic Form</h1>
-            <form>
-                <select name="tagselection" id="tagselection" value={selectTags} onChange={handleChange} className='border border-primary border-3 rounded mb-3'>
-                    <option className='border-primary' value="">Select form type</option>
-                    <option value="number">Number</option>
-                    <option value="text">Text</option>
-                    <option value="textarea">Textarea</option>
-                    <option value="dropdown">Dropdown</option>
-                    <option value="checkbox">Checkbox</option>
-                    <option value="radio">Radio</option>
-                </select>
-
-                {(selectTags === 'text' || selectTags === 'textarea' || selectTags === 'number') && (
-                    <div>
-                        <label htmlFor="labelInput" className='mb-2'>Enter label name</label>
-                        <br />
-                        <input 
-                            className='mb-3 border rounded'
-                            type="text"
-                            id="labelInput"
-                            name="labelInput"
-                            value={label}
-                            onChange={handleLabelChange}
-                            disabled={!selectTags}
-                        />
+        <div className="form-container container mt-5">
+            <div className="main-form">
+                <h1 className='mb-4'>React Dynamic Form</h1>
+                <form>
+                    <div className="mb-3">
+                        <select name="tagselection" id="tagselection" value={selectTags} onChange={handleChange} className={`form-select ${validationMessages.selectTags ? 'is-invalid' : ''}`}>
+                            <option value="">Select form type</option>
+                            <option value="number">Number</option>
+                            <option value="text">Text</option>
+                            <option value="textarea">Textarea</option>
+                            <option value="dropdown">Dropdown</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="radio">Radio</option>
+                        </select>
+                        {validationMessages.selectTags && <div className="invalid-feedback">{validationMessages.selectTags}</div>}
                     </div>
-                )}
 
-                {selectTags === 'dropdown' && (
+                    {(selectTags === 'text' || selectTags === 'textarea' || selectTags === 'number') && (
+                        <div className="mb-3">
+                            <label htmlFor="labelInput" className='form-label'>Enter label name</label>
+                            <input
+                                className={`form-control ${validationMessages.label ? 'is-invalid' : ''}`}
+                                type="text"
+                                id="labelInput"
+                                name="labelInput"
+                                value={label}
+                                onChange={handleLabelChange}
+                                disabled={!selectTags}
+                            />
+                            {validationMessages.label && <div className="invalid-feedback">{validationMessages.label}</div>}
+                        </div>
+                    )}
+
+                    {(selectTags === 'dropdown' || selectTags === 'checkbox' || selectTags === 'radio') && (
+                        <div className="mb-3">
+                            <label htmlFor="labelInput" className='form-label'>Add label</label>
+                            <input
+                                className={`form-control ${validationMessages.label ? 'is-invalid' : ''}`}
+                                type="text"
+                                id="labelInput"
+                                name="labelInput"
+                                value={label}
+                                onChange={handleLabelChange}
+                                disabled={!selectTags}
+                            />
+                            {validationMessages.label && <div className="invalid-feedback">{validationMessages.label}</div>}
+                            
+                            <label htmlFor="addOptions" className='form-label mt-2'>Add Options</label>
+                            <div className="input-group mb-3">
+                                <input
+                                    className={`form-control ${validationMessages.optionInput ? 'is-invalid' : ''}`}
+                                    type="text"
+                                    id="addOptions"
+                                    name="addOptions"
+                                    value={optionInput}
+                                    onChange={handleOptionInputChange}
+                                />
+                                <button onClick={addOptions} className='btn btn-info'>Add Option</button>
+                                {validationMessages.optionInput && <div className="invalid-feedback d-block">{validationMessages.optionInput}</div>}
+                            </div>
+                            
+                            <ul className="list-group">
+                                {options.map((option, index) => (
+                                    <li key={index} className="list-group-item">{option}</li>
+                                ))}
+                            </ul>
+                            {validationMessages.options && <div className="invalid-feedback d-block">{validationMessages.options}</div>}
+                        </div>
+                    )}
+
                     <div>
-                        <label htmlFor="labelInput">Add label</label>
-                        <input
-                            className='mb-3 border rounded ms-2  me-5'
-                            type="text"
-                            id="labelInput"
-                            name="labelInput"
-                            value={label}
-                            onChange={handleLabelChange}
-                            disabled={!selectTags}
-                        />
-                        <label htmlFor="addOptions">Add Options</label>
-                        <input
-                            className='mb-3 border rounded ms-2 me-3'
-                            type="text"
-                            id="addOptions"
-                            name="addOptions"
-                            value={optionInput}
-                            onChange={handleOptionInputChange}
-                        />
-                        <button onClick={addOptions} className='btn btn-info'>Add Option</button>
-                        <ul>
-                            {options.map((option, index) => (
-                                <li key={index}>{option}</li>
-                            ))}
-                        </ul>
+                        {selectTags.length >= 1 ? <button type="button" className='btn btn-primary' onClick={addInput}>Add input</button> : ' '}
                     </div>
-                )}
-
-                {(selectTags === 'checkbox' || selectTags === 'radio') && (
-                    <div>
-                        <label htmlFor="labelInput">Add label </label>
-                        <input
-                            className='mb-3 border rounded ms-2  me-5'
-                            type="text"
-                            id="labelInput"
-                            name="labelInput"
-                            value={label}
-                            onChange={handleLabelChange}
-                        />
-                        <label htmlFor="addOptions">Add Options</label>
-                        <input
-                            className='mb-3 border rounded ms-2 me-3'
-                            type="text"
-                            id="addOptions"
-                            name="addOptions"
-                            value={optionInput}
-                            onChange={handleOptionInputChange}
-                        />
-                        <button onClick={addOptions} className='btn btn-info'>Add Option</button>
-                        <ul>
-                            {options.map((option, index) => (
-                                <li key={index}>{option}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
-                <div>
-                    {selectTags.length>=1 ? <button type="button" className='btn btn-primary' onClick={addInput}>Add input</button> : ' '}
-                </div>
-
-                <ul>
+                </form>
+            </div>
+            <div className="created-forms mt-4">
+                <ul className="list-group">
                     {inputs.map((input, index) => (
-                        <li key={index}>
-                            <div className='mt-3 '>{input.label}</div>
-                            {input.type === 'text' && <input type="text" name={`input_${index}`} value={inputValues[`input_${index}`]} onChange={handleInputChange} />}
-                            {input.type === 'textarea' && <textarea name={`input_${index}`} value={inputValues[`input_${index}`]} onChange={handleInputChange}></textarea>}
-                            {input.type === 'number' && <input type="number" name={`input_${index}`} value={inputValues[`input_${index}`]} onChange={handleInputChange} />}  
+                        <li key={index} className="list-group-item">
+                            <div className='mt-3'>{input.label}</div>
+                            {input.type === 'text' && (
+                                <div className="mb-3">
+                                    <input type="text" className={`form-control ${validationMessages[`input_${index}`] ? 'is-invalid' : ''}`} name={`input_${index}`} value={inputValues[`input_${index}`] || ''} onChange={handleInputChange} />
+                                    {validationMessages[`input_${index}`] && <div className="invalid-feedback">{validationMessages[`input_${index}`]}</div>}
+                                </div>
+                            )}
+                            {input.type === 'textarea' && (
+                                <div className="mb-3">
+                                    <textarea className={`form-control ${validationMessages[`input_${index}`] ? 'is-invalid' : ''}`} name={`input_${index}`} value={inputValues[`input_${index}`] || ''} onChange={handleInputChange} />
+                                    {validationMessages[`input_${index}`] && <div className="invalid-feedback">{validationMessages[`input_${index}`]}</div>}
+                                </div>
+                            )}
+                            {input.type === 'number' && (
+                                <div className="mb-3">
+                                    <input type="number" className={`form-control ${validationMessages[`input_${index}`] ? 'is-invalid' : ''}`} name={`input_${index}`} value={inputValues[`input_${index}`] || ''} onChange={handleInputChange} />
+                                    {validationMessages[`input_${index}`] && <div className="invalid-feedback">{validationMessages[`input_${index}`]}</div>}
+                                </div>
+                            )}
                             {input.type === 'dropdown' && (
-                                <select className='border border-info border-3 rounded mt-1' name={`input_${index}`} value={inputValues[`input_${index}`]} onChange={handleInputChange}>
-                                    <option value="select">select</option>
-                                    {input.options.map((option, idx) => (
-                                        <option key={idx}>{option}</option>
-                                    ))}
-                                </select>
+                                <div className="mb-3">
+                                    <select className={`form-select ${validationMessages[`input_${index}`] ? 'is-invalid' : ''}`} name={`input_${index}`} value={inputValues[`input_${index}`] || ''} onChange={handleInputChange}>
+                                        <option value="">Select an option</option>
+                                        {input.options.map((option, idx) => (
+                                            <option key={idx} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                    {validationMessages[`input_${index}`] && <div className="invalid-feedback">{validationMessages[`input_${index}`]}</div>}
+                                </div>
                             )}
                             {input.type === 'checkbox' && (
-                                <ul className='mt-1'>
+                                <div className="mb-3">
                                     {input.options.map((option, idx) => (
-                                        <li key={idx}>
-                                            <input type="checkbox" className='me-2 ms-3' value={option} onChange={handleInputChange} />{option}
-                                        </li>
+                                        <div key={idx} className="form-check">
+                                            <input
+                                                type="checkbox"
+                                                className={`form-check-input ${validationMessages[`input_${index}`] ? 'is-invalid' : ''}`}
+                                                name={`input_${index}_${idx}`}
+                                                checked={!!inputValues[`input_${index}_${idx}`]}
+                                                onChange={handleInputChange}
+                                            />
+                                            <label className="form-check-label">{option}</label>
+                                        </div>
                                     ))}
-                                </ul>
+                                    {validationMessages[`input_${index}`] && <div className="invalid-feedback d-block">{validationMessages[`input_${index}`]}</div>}
+                                </div>
                             )}
                             {input.type === 'radio' && (
-                                <ul className='mt-1'>
+                                <div className="mb-3">
                                     {input.options.map((option, idx) => (
-                                        <li key={idx}>
-                                            <input type="radio" className='me-2 ms-3' name={`radio_${input.label}`} value={option} onChange={handleInputChange} />{option}
-                                        </li>
+                                        <div key={idx} className="form-check">
+                                            <input
+                                                type="radio"
+                                                className={`form-check-input ${validationMessages[`input_${index}`] ? 'is-invalid' : ''}`}
+                                                name={`input_${index}`}
+                                                value={option}
+                                                checked={inputValues[`input_${index}`] === option}
+                                                onChange={handleInputChange}
+                                            />
+                                            <label className="form-check-label">{option}</label>
+                                        </div>
                                     ))}
-                                </ul>
+                                    {validationMessages[`input_${index}`] && <div className="invalid-feedback d-block">{validationMessages[`input_${index}`]}</div>}
+                                </div>
                             )}
                         </li>
                     ))}
                 </ul>
-                {showSubmitButton && <button className='btn btn-primary' onClick={handleCheckboxSubmit}>Submit</button>}
-            </form>
+                {showSubmitButton && <button className="btn btn-success mt-4" onClick={handleCheckboxSubmit}>Submit</button>}
+                <br />
+                {message && <div className="alert alert-info mt-2" style={{ display: 'inline-block' }}>{message}</div>}
+            </div>
         </div>
     );
 };
+
+export default Homepage;
+
+
 
 

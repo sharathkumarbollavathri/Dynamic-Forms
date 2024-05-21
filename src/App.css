@@ -1,6 +1,28 @@
 .App {
   text-align: center;
 }
-ul{
-  list-style-type:none;
+
+ul {
+  list-style-type: none;
 }
+
+.form-container {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.main-form {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.created-forms {
+  flex: 1;
+}
+
+.created-form-item {
+  margin-bottom: 20px;
+  border-bottom: none;
+}
+
