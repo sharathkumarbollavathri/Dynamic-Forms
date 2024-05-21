@@ -35,10 +35,10 @@ Contributions to the React Dynamic Form Builder are welcome! To contribute, plea
 
 
 ## Contact
-For questions or feedback regarding the React Dynamic Form Builder, please contact ## mailto: sharath4997@gmail.com.
+For questions or feedback regarding the React Dynamic Form Builder, please contact [Sharath kumar](mailto:sharath4997@gmail.com).
 
 ## Demo
-You can try out a live demo of the React Dynamic Form Builder [here](#).
+You can try out a live demo of the React Dynamic Form Builder [here](https://dynamic-forms-mfb5.vercel.app/).
 
 ## Roadmap
 - Add support for additional input types.
